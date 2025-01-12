@@ -1,3 +1,2 @@
-//TODO: 1.3.3 Put your API key and CoinAPI's base url in the following constants
-const kAPIKey = '';
-const kBaseURL = '';
+const kAPIKey = 'C1714534-7F3F-4854-A844-A3FC822DD587';
+const kBaseURL = 'https://rest.coinapi.io/v1/exchangerate';

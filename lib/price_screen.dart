@@ -1,5 +1,6 @@
 import 'package:coin_tracker/models/coin_model.dart';
 import 'package:coin_tracker/utilities/coin_data.dart';
+import 'package:country_currency_pickers/country_pickers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,22 +14,27 @@ class PriceScreen extends StatefulWidget {
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
 
-  //TODO: 2. Remove everything from the coinsList
-  List<CoinModel> coinsList = [
-    CoinModel(icon: 'btc', name: 'Bitcoin', price: 16800),
-    CoinModel(icon: 'eth', name: 'Ethereum', price: 1200),
-    CoinModel(icon: 'ltc', name: 'Litecoin', price: 62.5),
-  ];
+  List<CoinModel> coinsList = [];
 
-  //TODO: 3. Create a function of type Future, called getCoinsValue
-  //TODO: 3.1 Use a try and catch block just make sure the code won't crash your app. Use the following links to learn more about Exception Handling in Dart.
-  // https://medium.com/run-dart/dart-dartlang-introduction-exception-handling-f9f088906f7c
-  // https://www.tutorialspoint.com/dart_programming/dart_programming_exceptions.htm
+  Future<void> getCoinsValue(String currency) async {
+    try {
+      var data = await CoinData().getCoinData(currency);
 
-  //TODO: 3.2 create a variable called data and assign it to what getCoinData from CoinData class returns
-  //TODO: 3.3 If the data was not null, call the setState function, and inside the function assign data to the coins List.
+      if (data != null) {
+        setState(() {
+          coinsList = data;
+        });
+      }
+    } catch (e) {
+      print('Error occurred while fetching coin values: $e');
+    }
+  }
 
-  //TODO: 4. override the initState function, and inside the function call the getCoinsValue function.
+  @override
+  void initState() {
+    super.initState();
+    getCoinsValue('USD');
+  }
 
   CupertinoPicker getCupertinoPicker() {
     List<Text> pickerItems = [];
@@ -38,7 +44,10 @@ class _PriceScreenState extends State<PriceScreen> {
     return CupertinoPicker(
       itemExtent: 32,
       onSelectedItemChanged: (selectedIndex) {
-        //TODO: 6. Call the getCoinsValue, when an item is selected from the picker
+        setState(() {
+          selectedCurrency = currenciesList[selectedIndex];
+          getCoinsValue(selectedCurrency);
+        });
       },
       children: pickerItems,
     );
@@ -48,7 +57,15 @@ class _PriceScreenState extends State<PriceScreen> {
     List<DropdownMenuItem<String>> dropdownItems = [];
     for (String currency in currenciesList) {
       var newItem = DropdownMenuItem(
-        child: Text(currency),
+        child: Row(
+          children: [
+            CountryPickerUtils.getDefaultFlagImage(
+              CountryPickerUtils.getCountryByCurrencyCode(currency),
+            ),
+            const SizedBox(width: 12),
+            Text(currency),
+          ],
+        ),
         value: currency,
       );
       dropdownItems.add(newItem);
@@ -70,7 +87,7 @@ class _PriceScreenState extends State<PriceScreen> {
           onChanged: (value) {
             setState(() {
               selectedCurrency = value!;
-              //TODO: 5. Call the getCoinsValue, when an item is selected from the dropdown menu
+              getCoinsValue(selectedCurrency);
             });
           },
         ),
@@ -82,79 +99,78 @@ class _PriceScreenState extends State<PriceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Expanded(
-                flex: 5,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('images/coin.png', width: 100),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Coin Tracker',
-                      style: TextStyle(fontSize: 28),
-                    ),
-                  ],
-                )),
-            Expanded(
-              flex: 6,
-              child: ListView.separated(
-                itemBuilder: (BuildContext context, int index) {
-                  return ListTile(
-                    leading: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          //TODO: 7. use toLowerCase function on icon to lower case the icon name
-                          'images/${coinsList[index].icon}.png',
-                          width: 60,
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          children: [
-                            const Text('1', style: TextStyle(fontSize: 18)),
-                            Text(
-                              coinsList[index].name,
-                              style: const TextStyle(color: Colors.white24),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                    trailing: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          NumberFormat("#,###.0")
-                              .format(coinsList[index].price),
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          selectedCurrency,
-                          style: const TextStyle(color: Colors.white24),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                separatorBuilder: (BuildContext context, int index) =>
-                    const Divider(),
-                itemCount: coinsList.length,
-              ),
-            ),
-            Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: Platform.isIOS ? 0 : 8.0),
-              height: Platform.isIOS ? 150 : 60,
-              child:
-                  Platform.isIOS ? getCupertinoPicker() : getDropdownButton(),
-            ),
-          ],
+      child: Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+      Expanded(
+      flex: 5,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('images/coin.png', width: 100),
+          const SizedBox(height: 16),
+          const Text(
+            'Coin Tracker',
+            style: TextStyle(fontSize: 28),
+          ),
+        ],
+      ),
+    ),
+    Expanded(
+    flex: 6,
+    child: ListView.separated(
+    itemBuilder: (BuildContext context, int index) {
+    return ListTile(
+    leading: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+    Image.asset(
+    'images/${coinsList[index].icon.toLowerCase()}.png',
+      width: 60,
+    ),
+      const SizedBox(width: 12),
+      Column(
+        children: [
+          const Text('1', style: TextStyle(fontSize: 18)),
+          Text(
+            coinsList[index].name,
+            style: const TextStyle(color: Colors.white24),
+          ),
+        ],
+      )
+    ],
+    ),
+      trailing: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            NumberFormat("#,###.0")
+                .format(coinsList[index].price),
+            style: const TextStyle(fontSize: 18),
+          ),
+          Text(
+            selectedCurrency,
+            style: const TextStyle(color: Colors.white24),
+          ),
+        ],
+      ),
+    );
+    },
+      separatorBuilder: (BuildContext context, int index) =>
+      const Divider(),
+      itemCount: coinsList.length,
+    ),
+    ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: Platform.isIOS ? 0 : 8),
+          height: Platform.isIOS ? 150 : 60,
+          child:
+          Platform.isIOS ? getCupertinoPicker() : getDropdownButton(),
         ),
+      ],
+      ),
       ),
     );
   }
